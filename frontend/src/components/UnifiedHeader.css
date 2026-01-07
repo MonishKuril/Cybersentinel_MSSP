@@ -1,0 +1,219 @@
+.unified-header {
+    background: var(--header-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 10px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: var(--theme-transition);
+    border-bottom: 1px solid var(--border-color);
+    height: 90px; /* Increased height for two rows */
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-left .logo {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+.header-left .logo:hover {
+  transform: scale(1.1) rotate(-10deg);
+}
+
+.header-titles {
+    display: flex;
+    flex-direction: column;
+}
+
+.header-left h1 {
+    font-size: 1.5rem;
+    margin: 0;
+    color: var(--primary-text);
+    font-weight: 1000;
+    line-height: 1;
+}
+
+.welcome-message h2 {
+    font-size: 1.3rem; /* Increased font size */
+    margin: 4px 0 0 0;
+    color: var(--secondary-text);
+    font-weight: 500;
+    line-height: 1;
+}
+
+.header-right {
+    display: flex;
+    flex-direction: column; /* Two rows */
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.header-top-row,
+.header-bottom-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.search-bar-integrated {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--tertiary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    padding: 5px 10px;
+    transition: all 0.3s ease;
+}
+
+.search-bar-integrated:hover {
+    background: var(--primary-bg);
+    border-color: var(--primary-text);
+}
+
+.search-bar-integrated svg {
+    margin-right: 8px;
+    color: var(--secondary-text);
+}
+
+.search-bar-integrated input {
+    background: transparent;
+    border: none;
+    color: var(--primary-text);
+    font-size: 14px;
+    outline: none;
+    width: 200px;
+}
+
+.search-bar-integrated input::placeholder {
+    color: var(--secondary-text);
+}
+
+/* --- Media Queries --- */
+
+/* For smaller desktops and larger tablets */
+@media (max-width: 1200px) {
+    .unified-header {
+        padding: 10px 20px;
+        height: auto; /* Allow height to adjust */
+        flex-wrap: wrap;
+    }
+
+    .header-left h1 {
+        font-size: 1.3rem;
+    }
+
+    .welcome-message h2 {
+        font-size: 1rem;
+    }
+
+    .header-right {
+        width: 100%; /* Take full width */
+        align-items: flex-start; /* Align elements to the start */
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .header-top-row,
+    .header-bottom-row {
+        width: 100%;
+        justify-content: space-between;
+        gap: 10px;
+    }
+}
+
+/* For tablets and larger phones */
+@media (max-width: 768px) {
+    .unified-header {
+        flex-direction: column; /* Stack elements vertically */
+        height: auto;
+        padding: 15px;
+    }
+
+    .header-left,
+    .header-right {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .header-left {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .header-titles {
+        align-items: center;
+    }
+
+    .header-left .logo {
+        margin-bottom: 5px;
+    }
+
+    .header-right {
+        align-items: center; /* Center the column content */
+    }
+
+    .header-top-row,
+    .header-bottom-row {
+        flex-wrap: wrap; /* Allow buttons/search to wrap */
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .search-bar-integrated input {
+        width: 150px; /* Adjust width for smaller screens */
+    }
+
+    .outline-btn {
+        padding: 6px 12px;
+        font-size: 13px;
+        gap: 5px;
+    }
+}
+
+/* For small phones */
+@media (max-width: 480px) {
+    .unified-header {
+        padding: 10px;
+    }
+
+    .header-left h1 {
+        font-size: 1.2rem;
+    }
+
+    .welcome-message h2 {
+        font-size: 0.9rem;
+    }
+
+    .header-left .logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    .search-bar-integrated {
+        width: 100%;
+        padding: 5px 8px;
+    }
+
+    .search-bar-integrated input {
+        width: 100%; /* Fill available width */
+    }
+
+    .outline-btn {
+        width: 100%; /* Make buttons full width */
+        justify-content: center;
+    }
+}

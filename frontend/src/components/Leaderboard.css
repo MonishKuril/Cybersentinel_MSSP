@@ -1,0 +1,84 @@
+.leaderboard-wrapper {
+    position: relative;
+}
+
+.leaderboard-toggle {
+    background: var(--tertiary-bg);
+    border: 1px solid var(--border-color); /* Added border */
+    border-radius: 5px;
+    padding: 8px 15px;
+    color: var(--primary-text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.leaderboard-toggle:hover {
+    background: var(--tertiary-bg);
+    opacity: 0.8;
+    border-color: var(--primary-text); /* Hover effect for border */
+}
+
+/* ... rest of the CSS ... */
+
+.leaderboard-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 250px;
+    background: var(--popup-bg);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border-radius: 5px;
+    padding: 15px;
+    margin-top: 10px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    z-index: 10;
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color); /* Added border for consistency */
+}
+
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    background: var(--tertiary-bg);
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.leaderboard-item:hover {
+    background: var(--secondary-bg);
+}
+
+.leaderboard-rank {
+    font-weight: bold;
+    margin-right: 10px;
+    color: var(--primary-text);
+    width: 20px;
+}
+
+.leaderboard-name {
+    flex-grow: 1;
+    color: var(--primary-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.leaderboard-count {
+    color: var(--normal-logs-color);
+    font-weight: bold;
+    margin-left: 10px;
+}

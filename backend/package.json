@@ -1,0 +1,40 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "bcrypt": "^5.1.1",
+    "body-parser": "^2.2.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.13",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "knex": "^3.1.0",
+    "node-cache": "^5.1.2",
+    "node-fetch": "^2.7.0",
+    "qrcode": "^1.5.4",
+    "rss-parser": "^3.13.0",
+    "speakeasy": "^2.0.0",
+    "sqlite3": "^5.1.7",
+    "winston": "^3.13.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "prompts": "^2.4.2"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "db:setup": "node scripts/setup-database.js",
+    "db:migrate": "node scripts/migrate-data.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

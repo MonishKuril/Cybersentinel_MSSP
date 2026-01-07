@@ -1,0 +1,35 @@
+.admins-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admins-table th,
+.admins-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.admins-table th {
+  font-weight: 500;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.status {
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status.active {
+  background: rgba(46, 204, 113, 0.2);
+  color: var(--normal-logs-color);
+}
+
+.status.blocked {
+  background: rgba(231, 76, 60, 0.2);
+  color: var(--major-logs-color);
+}

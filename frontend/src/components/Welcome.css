@@ -1,0 +1,10 @@
+.welcome-section {
+  padding: 1rem;
+}
+
+.welcome-section h2 {
+  font-size: 1.8rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px var(--shadow-color);
+}

@@ -1,0 +1,80 @@
+.table-container {
+  padding: 1rem;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.table-header h2 {
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.add-btn {
+  background: var(--total-logs-color);
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.add-btn:hover {
+  opacity: 0.9;
+}
+
+.clients-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.clients-table th,
+.clients-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.clients-table th {
+  font-weight: 500;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.clients-table td a {
+  color: var(--total-logs-color);
+  text-decoration: none;
+}
+
+.table-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  background: var(--tertiary-bg);
+  color: var(--primary-text);
+  border: 1px solid transparent;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+  border-color: var(--total-logs-color);
+}
+
+.action-btn.danger {
+  color: var(--major-logs-color);
+}
+
+.action-btn.danger:hover {
+  border-color: var(--major-logs-color);
+}

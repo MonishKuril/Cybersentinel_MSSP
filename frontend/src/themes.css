@@ -1,0 +1,56 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* In themes.css */
+:root {
+  --theme-transition: all 0.3s ease;
+}
+
+.theme-light {
+  --primary-bg: rgba(255, 255, 255, 0.1);
+  --secondary-bg: rgba(255, 255, 255, 0.2);
+  --tertiary-bg: rgba(0, 0, 0, 0.1);
+  --header-bg: rgba(255, 255, 255, 0.137);
+  --popup-bg: rgba(255, 255, 255, 0.8);
+  
+  --primary-text: black;
+  --secondary-text: rgba(0, 0, 0, 0.7);
+  --inverted-text: white;
+
+  --border-color: rgba(0, 0, 0, 0.1);
+  --card-border-color: rgba(255, 255, 255, 0.2);
+  
+  --shadow-color: rgba(0, 0, 0, 0.2);
+
+  --total-logs-color: #3498db;
+  --major-logs-color: #e74c3c;
+  --normal-logs-color: #2ecc71;
+  --gradient-bar: linear-gradient(90deg, #3498db, #2ecc71);
+}
+
+.theme-dark {
+  --primary-bg: #1E1E1E;
+  --secondary-bg: #2C2C2C;
+  --tertiary-bg: #3A3A3A;
+  --header-bg: rgba(30, 30, 30, 0.8);
+  --popup-bg: #252525;
+
+  --primary-text: #EAEAEA;
+  --secondary-text: #A0A0A0;
+  --inverted-text: black;
+
+  --border-color: rgba(255, 255, 255, 0.1);
+  --card-border-color: rgba(255, 255, 255, 0.2);
+  
+  --shadow-color: rgba(0, 0, 0, 0.5);
+
+  --total-logs-color: #5dade2;
+  --major-logs-color: #e74c3c;
+  --normal-logs-color: #2ecc71;
+  --gradient-bar: linear-gradient(90deg, #5dade2, #2ecc71);
+}
