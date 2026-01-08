@@ -107,7 +107,7 @@ install_and_build() {
     # Database Setup
     if [ ! -f "mssp.db" ]; then
         print_msg "   - Initializing Database..." $NC
-        npm run db:setup >/dev/null 2>&1
+        npm run db:setup
     fi
     cd - >/dev/null
 
