@@ -1,4 +1,6 @@
 import React from 'react';
+import { TextField } from '@mui/material';
+import PasswordInput from './PasswordInput';
 import './Form.css';
 
 const AddClientForm = ({ clientData, setClientData, error }) => {
@@ -22,84 +24,88 @@ const AddClientForm = ({ clientData, setClientData, error }) => {
     <>
       {error && <div className="error-message">{error}</div>}
       <div className="form-group">
-        <label htmlFor="clientName">Client Name</label>
-        <input
-          type="text"
+        <TextField
           id="clientName"
           name="name"
+          label="Client Name"
           value={clientData.name}
           onChange={handleChange}
           placeholder="Client Name"
           required
+          fullWidth
         />
       </div>
       <div className="form-group">
-        <label htmlFor="clientUrl">Dashboard URL</label>
-        <input
-          type="url"
+        <TextField
           id="clientUrl"
           name="url"
+          label="Dashboard URL"
+          type="url"
           value={clientData.url}
           onChange={handleChange}
           placeholder="http://ip:port[UI's Port]"
           required
+          fullWidth
         />
       </div>
       <div className="form-group">
-        <label htmlFor="clientDescription">Description</label>
-        <textarea
+        <TextField
           id="clientDescription"
           name="description"
+          label="Description"
           value={clientData.description}
           onChange={handleChange}
           placeholder="Description"
-        ></textarea>
+          multiline
+          rows={4}
+          fullWidth
+        />
       </div>
 
       <div className="form-section">
         <h3>Graylog Configuration</h3>
         <div className="form-group">
-          <label htmlFor="graylogHost">Graylog Host</label>
-          <input
-            type="text"
+          <TextField
             id="graylogHost"
             name="host"
+            label="Graylog Host"
             value={clientData.graylog.host}
             onChange={(e) => handleNestedChange(e, 'graylog')}
             placeholder="http://ip:port[graylog's Port]"
+            fullWidth
           />
         </div>
         <div className="form-group">
-          <label htmlFor="graylogUsername">Username</label>
-          <input
-            type="text"
+          <TextField
             id="graylogUsername"
             name="username"
+            label="Username"
             value={clientData.graylog.username}
             onChange={(e) => handleNestedChange(e, 'graylog')}
             placeholder="Username"
+            fullWidth
           />
         </div>
         <div className="form-group">
-          <label htmlFor="graylogPassword">Password</label>
-          <input
-            type="password"
+          <PasswordInput
             id="graylogPassword"
             name="password"
+            label="Password"
             value={clientData.graylog.password}
             onChange={(e) => handleNestedChange(e, 'graylog')}
             placeholder="Password"
+            fullWidth
           />
         </div>
         <div className="form-group">
-          <label htmlFor="graylogStreamId">Stream ID</label>
-          <input
-            type="text"
+          <TextField
             id="graylogStreamId"
             name="streamId"
+            label="Stream ID"
             value={clientData.graylog.streamId}
             onChange={(e) => handleNestedChange(e, 'graylog')}
             placeholder="Stream ID"
+            fullWidth
           />
         </div>
       </div>
@@ -107,36 +113,36 @@ const AddClientForm = ({ clientData, setClientData, error }) => {
       <div className="form-section">
         <h3>SIEM UI Configuration</h3>
         <div className="form-group">
-          <label htmlFor="logApiHost">Frontend Host</label>
-          <input
-            type="text"
+          <TextField
             id="logApiHost"
             name="host"
+            label="Frontend Host"
             value={clientData.logApi.host}
             onChange={(e) => handleNestedChange(e, 'logApi')}
             placeholder="http://ip:port[UI's Backend Port]"
+            fullWidth
           />
         </div>
         <div className="form-group">
-          <label htmlFor="logApiUsername">Username</label>
-          <input
-            type="text"
+          <TextField
             id="logApiUsername"
             name="username"
+            label="Username"
             value={clientData.logApi.username}
             onChange={(e) => handleNestedChange(e, 'logApi')}
             placeholder="Username"
+            fullWidth
           />
         </div>
         <div className="form-group">
-          <label htmlFor="logApiPassword">Password</label>
-          <input
-            type="password"
+          <PasswordInput
             id="logApiPassword"
             name="password"
+            label="Password"
             value={clientData.logApi.password}
             onChange={(e) => handleNestedChange(e, 'logApi')}
             placeholder="Password"
+            fullWidth
           />
         </div>
       </div>

@@ -1,4 +1,6 @@
 import React from 'react';
+import { TextField } from '@mui/material';
+import PasswordInput from './PasswordInput';
 import './Form.css';
 
 const AddSuperAdminForm = ({ adminData, setAdminData, error }) => {
@@ -11,87 +13,88 @@ const AddSuperAdminForm = ({ adminData, setAdminData, error }) => {
     <>
       {error && <div className="error-message">{error}</div>}
       <div className="form-group">
-        <label htmlFor="superAdminUsername">Superadmin Username</label>
-        <input
-          type="text"
+        <TextField
           id="superAdminUsername"
           name="username"
+          label="Superadmin Username"
           value={adminData.username}
           onChange={handleChange}
           placeholder="Superadmin Username"
           required
+          fullWidth
         />
       </div>
       <div className="form-group">
-        <label htmlFor="superAdminPassword">Superadmin Password</label>
-        <input
-          type="password"
+        <PasswordInput
           id="superAdminPassword"
           name="password"
+          label="Superadmin Password"
           value={adminData.password}
           onChange={handleChange}
           placeholder="Superadmin Password"
           required
+          fullWidth
         />
       </div>
       <div className="form-group">
-        <label htmlFor="superAdminName">Name</label>
-        <input
-          type="text"
+        <TextField
           id="superAdminName"
           name="name"
+          label="Name"
           value={adminData.name}
           onChange={handleChange}
           placeholder="Name"
           required
+          fullWidth
         />
       </div>
       <div className="form-group">
-        <label htmlFor="superAdminEmail">Email ID</label>
-        <input
-          type="email"
+        <TextField
           id="superAdminEmail"
           name="email"
+          label="Email ID"
+          type="email"
           value={adminData.email}
           onChange={handleChange}
           placeholder="Email ID"
           required
+          fullWidth
         />
       </div>
       <div className="form-group">
-        <label htmlFor="superAdminOrganization">Organization Name</label>
-        <input
-          type="text"
+        <TextField
           id="superAdminOrganization"
           name="organization"
+          label="Organization Name"
           value={adminData.organization}
           onChange={handleChange}
           placeholder="Organization Name"
           required
+          fullWidth
         />
       </div>
       <div className="form-group">
-        <label htmlFor="superAdminCity">City</label>
-        <input
-          type="text"
+        <TextField
           id="superAdminCity"
           name="city"
+          label="City"
           value={adminData.city}
           onChange={handleChange}
           placeholder="City"
           required
+          fullWidth
         />
       </div>
       <div className="form-group">
-        <label htmlFor="superAdminState">State</label>
-        <input
-          type="text"
+        <TextField
           id="superAdminState"
           name="state"
+          label="State"
           value={adminData.state}
           onChange={handleChange}
           placeholder="State"
           required
+          fullWidth
         />
       </div>
     </>

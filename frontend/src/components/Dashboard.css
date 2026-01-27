@@ -28,6 +28,29 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 25px;
     padding: 30px;
+    max-height: calc(100vh - 130px); /* Adjusted based on header (90px) and news ticker (~40px) */
+    overflow-y: auto;
+}
+
+/* For consistent scrolling behavior in Firefox */
+.dashboard-grid {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+.dashboard-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.dashboard-grid::-webkit-scrollbar-track {
+    background: var(--scroll-track);
+    border-radius: 10px;
+}
+
+.dashboard-grid::-webkit-scrollbar-thumb {
+    background-color: var(--scroll-thumb);
+    border-radius: 10px;
+    border: 2px solid var(--scroll-track);
 }
 
 /* --- Media Queries --- */

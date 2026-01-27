@@ -12,34 +12,57 @@ const NewsTicker = ({ inManagementView }) => {
   const [source, setSource] = useState('Local');
   const [isPaused, setIsPaused] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    const fetchNews = async () => {
+    // Defer news loading to avoid blocking initial page load
+    const timer = setTimeout(() => {
+      const fetchNews = async () => {
+        try {
+          const data = await api.getNews();
+          if (data && data.news && data.news.length > 0) {
+              setNews(data.news);
+              setSource(data.source || 'Internal');
+          } else {
+              setNews(DEFAULT_NEWS);
+              setSource('Internal');
+          }
+        } catch (error) {
+          console.error('Error fetching news:', error);
+          setNews(DEFAULT_NEWS);
+          setSource('Internal');
+        }
+        setInitialized(true);
+      };
+
+      fetchNews();
+    }, 1000); // Delay news fetch by 1 second to prioritize main content
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!initialized) return; // Only set up intervals after initial fetch
+
+    const newsInterval = setInterval(async () => {
       try {
         const data = await api.getNews();
         if (data && data.news && data.news.length > 0) {
             setNews(data.news);
             setSource(data.source || 'Internal');
-        } else {
-            setNews(DEFAULT_NEWS);
-            setSource('Internal');
         }
       } catch (error) {
         console.error('Error fetching news:', error);
-        setNews(DEFAULT_NEWS);
-        setSource('Internal');
       }
-    };
+    }, 5 * 60 * 1000); // every 5 minutes
 
-    fetchNews();
-    const newsInterval = setInterval(fetchNews, 5 * 60 * 1000); // every 5 minutes
     const timeInterval = setInterval(() => setCurrentTime(new Date().toLocaleTimeString()), 1000);
 
     return () => {
       clearInterval(newsInterval);
       clearInterval(timeInterval);
     };
-  }, []);
+  }, [initialized]);
 
   const handlePauseToggle = () => {
     setIsPaused(!isPaused);

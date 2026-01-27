@@ -46,7 +46,7 @@ const ClientCard = ({ client, logStats = { total: 0, major: 0, normal: 0 }, hist
         // Use the client's URL as the base and append the SSO login path
         const siemBaseUrl = new URL(client.url).origin;
         const redirectUrl = `${siemBaseUrl}/mssp-login?token=${encodeURIComponent(response.siemToken)}`;
-        window.location.href = redirectUrl;
+        window.open(redirectUrl, '_blank');
       } else {
         console.error('Failed to get SIEM access token:', response.message);
         alert('Failed to access SIEM dashboard. Please try again.');
@@ -79,9 +79,38 @@ const ClientCard = ({ client, logStats = { total: 0, major: 0, normal: 0 }, hist
     return 'healthy';
   }
 
+  // Check if this client is still loading
+  const isLoading = client.isLoading;
+
   return (
-    <div className={`client-card status-${getStatus()} ${isRedirecting ? 'redirecting' : ''}`} onClick={handleCardClick}>
+    <div className={`client-card status-${getStatus()} ${isRedirecting ? 'redirecting' : ''} ${isLoading ? 'loading' : ''}`} onClick={handleCardClick}>
       <div className="status-stripe"></div>
+
+      {/* Loading overlay */}
+      {isLoading && (
+        <div className="loading-overlay" style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: '16px',
+          zIndex: 2
+        }}>
+          <div className="spinner" style={{
+            width: '30px',
+            height: '30px',
+            border: '3px solid rgba(255,255,255,0.3)',
+            borderTop: '3px solid white',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }}></div>
+        </div>
+      )}
 
       {/* SIEM indicator */}
       {isSIEMClient() && (
@@ -119,14 +148,14 @@ const ClientCard = ({ client, logStats = { total: 0, major: 0, normal: 0 }, hist
 
       {/* Section 2: Key Metrics */}
       <div className="card-section metrics-section">
-        <StatNumber value={logStats.total} label="Total Logs" colorClass="total-logs-color" />
-        <StatNumber value={logStats.major} label="Major Alerts" colorClass="major-logs-color" />
-        <StatNumber value={logStats.normal} label="Normal Logs" colorClass="normal-logs-color" />
+        <StatNumber value={isLoading ? 0 : logStats.total} label="Total Logs" colorClass="total-logs-color" />
+        <StatNumber value={isLoading ? 0 : logStats.major} label="Major Alerts" colorClass="major-logs-color" />
+        <StatNumber value={isLoading ? 0 : logStats.normal} label="Normal Logs" colorClass="normal-logs-color" />
       </div>
 
       {/* Section 3: Graph */}
       <div className="card-section graph-section">
-          <Sparkline history={history} />
+          <Sparkline history={isLoading ? Array(12).fill(0) : history} />
           <div className="graph-labels">
             <span>-120s</span>
             <span>Now</span>

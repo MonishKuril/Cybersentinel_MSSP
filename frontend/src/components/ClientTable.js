@@ -12,6 +12,7 @@ const ClientTable = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchClients();
@@ -31,6 +32,7 @@ const ClientTable = () => {
   };
 
   const handleAddClient = async (clientData) => {
+    setIsSubmitting(true);
     try {
       await api.addClient(clientData);
       fetchClients();
@@ -38,10 +40,13 @@ const ClientTable = () => {
     } catch (error) {
       setError('Failed to add client');
       console.error('Failed to add client', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleUpdateClient = async (clientId, clientData) => {
+    setIsSubmitting(true);
     try {
       await api.updateClient(clientId, clientData);
       fetchClients();
@@ -49,6 +54,8 @@ const ClientTable = () => {
     } catch (error) {
       setError('Failed to update client');
       console.error('Failed to update client', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
@@ -106,10 +113,10 @@ const ClientTable = () => {
           ))}
         </tbody>
       </table>
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Client">
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Client" isSubmitting={isSubmitting}>
         <AddClientForm onAddClient={handleAddClient} onClose={() => setIsAddModalOpen(false)} />
       </Modal>
-      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Client">
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Client" isSubmitting={isSubmitting}>
         <EditClientForm client={selectedClient} onUpdateClient={handleUpdateClient} onClose={() => setIsEditModalOpen(false)} />
       </Modal>
     </div>

@@ -85,15 +85,32 @@ const verifyMFAToken = async (username, token) => {
 };
 
 router.post('/login', async (req, res) => {
-  const { username, password, totpCode } = req.body;
+  let { username, password, totpCode } = req.body;
+  username = username ? username.trim() : username;
+  password = password ? password.trim() : password;
+  totpCode = totpCode ? totpCode.trim() : totpCode;
   console.log('Login attempt for:', username);
 
   try {
+    // Validate input
+    if (!username || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Username and password are required"
+      });
+    }
+
     console.log('1. Fetching user from DB');
-    const user = await knex('users').where({ username }).first();
+    // Only select necessary fields for performance
+    const user = await knex('users')
+      .where({ username })
+      .select('id', 'username', 'password', 'role', 'mfa_secret', 'blocked')
+      .first();
 
     if (!user) {
       console.log('User not found');
+      // Add a small delay to prevent timing attacks
+      await new Promise(resolve => setTimeout(resolve, 100));
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
     console.log('2. User found:', user.username);
@@ -115,7 +132,6 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
     console.log('5. Password is valid');
-
 
     const hasMFA = !!user.mfa_secret;
     console.log('6. MFA Status:', hasMFA);
@@ -143,9 +159,8 @@ router.post('/login', async (req, res) => {
     }
     console.log('8. MFA token is valid');
 
-
     const token = jwt.sign(
-      { username, role: user.role },
+      { id: user.id, username, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '8h' }
     );

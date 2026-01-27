@@ -67,6 +67,11 @@ export const getAdmins = () => {
   return fetch('/api/admin/admins').then(handleResponse);
 };
 
+export const getSuperAdmins = () => {
+  return fetch('/api/admin/superadmins').then(handleResponse);
+};
+
+
 export const addAdmin = (adminData) => {
   return fetch('/api/admin/admins', {
     method: 'POST',
@@ -99,6 +104,14 @@ export const toggleAdminBlock = (adminId, isBlocked) => {
   }).then(handleResponse);
 };
 
+export const toggleSuperAdminBlock = (username, isBlocked) => {
+  return fetch(`/api/admin/superadmins/${username}/block`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ blocked: !isBlocked }),
+  }).then(handleResponse);
+};
+
 export const getNews = () => {
   return fetch('/api/news/scrape').then(handleResponse);
 };
@@ -117,3 +130,5 @@ export const getSIEMToken = () => {
     credentials: 'include' // Include MSSP auth cookie
   }).then(handleResponse);
 };
+
+

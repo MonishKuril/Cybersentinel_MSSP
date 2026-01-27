@@ -5,6 +5,17 @@ const path = require('path');
 // Ensure dotenv is loaded to read from the .env file
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
+// Helper function to check if an index exists in SQLite
+async function checkIndexExists(connection, tableName, indexName) {
+  try {
+    const indexes = await connection.raw("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = ? AND name = ?", [tableName, indexName]);
+    return indexes.length > 0;
+  } catch (error) {
+    console.error('Error checking index existence:', error);
+    return false;
+  }
+}
+
 async function setupDatabase() {
   try {
     console.log('Starting database setup...');
@@ -44,8 +55,25 @@ async function setupDatabase() {
         table.timestamps(true, true);
       });
       console.log('✅ Table "clients" created successfully.');
+
+      // Add index for faster duplicate checks
+      await knex.schema.alterTable('clients', (table) => {
+        table.index(['name']);
+      });
+      console.log('✅ Index on "name" column created.');
     } else {
       console.log("✅ Table 'clients' already exists.");
+
+      // Add index for faster duplicate checks if it doesn't exist
+      const existingIndexes = await knex.raw("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'clients' AND name LIKE 'clients_name%'");
+      if (existingIndexes.length === 0) {
+        await knex.schema.alterTable('clients', (table) => {
+          table.index(['name']);
+        });
+        console.log('✅ Index on "name" column created.');
+      } else {
+        console.log('✅ Index on "name" column already exists.');
+      }
     }
     
     // 3. Add missing columns to 'clients' table
@@ -83,8 +111,37 @@ async function setupDatabase() {
         table.unique(['client_id', 'user_id']);
       });
       console.log("✅ Table 'client_admins' created successfully.");
+
+      // Add indexes for better performance on joins
+      await knex.schema.alterTable('client_admins', (table) => {
+        table.index(['client_id']);
+        table.index(['user_id']);
+      });
+      console.log("✅ Indexes on 'client_id' and 'user_id' columns created.");
     } else {
       console.log("✅ Table 'client_admins' already exists.");
+
+      // Add indexes if they don't exist
+      const clientIdxExists = await knex.raw("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'client_admins' AND name LIKE 'client_admins_client_id%'");
+      const userIdxExists = await knex.raw("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'client_admins' AND name LIKE 'client_admins_user_id%'");
+
+      if (clientIdxExists.length === 0) {
+        await knex.schema.alterTable('client_admins', (table) => {
+          table.index(['client_id']);
+        });
+        console.log("✅ Index on 'client_id' column created.");
+      } else {
+        console.log("✅ Index on 'client_id' column already exists.");
+      }
+
+      if (userIdxExists.length === 0) {
+        await knex.schema.alterTable('client_admins', (table) => {
+          table.index(['user_id']);
+        });
+        console.log("✅ Index on 'user_id' column created.");
+      } else {
+        console.log("✅ Index on 'user_id' column already exists.");
+      }
     }
 
     // 5. Clean up legacy columns

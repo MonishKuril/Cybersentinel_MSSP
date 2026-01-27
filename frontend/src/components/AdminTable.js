@@ -9,10 +9,10 @@ const AdminTable = () => {
   const [admins, setAdmins] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddAdminModalOpen, setIsAddAdminModalOpen] = useState(false);
-  const [isAddSuperAdminModalOpen, setIsAddSuperAdminModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchAdmins();
@@ -32,6 +32,7 @@ const AdminTable = () => {
   };
 
   const handleAddAdmin = async (adminData) => {
+    setIsSubmitting(true);
     try {
       await api.addAdmin(adminData);
       fetchAdmins();
@@ -39,28 +40,22 @@ const AdminTable = () => {
     } catch (error) {
       setError('Failed to add admin');
       console.error('Failed to add admin', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
-  const handleAddSuperAdmin = async (adminData) => {
-    try {
-      await api.addSuperAdmin(adminData);
-      fetchAdmins();
-      setIsAddSuperAdminModalOpen(false);
-    } catch (error) {
-      setError('Failed to add superadmin');
-      console.error('Failed to add superadmin', error);
-    }
-  };
-
   const handleUpdateAdmin = async (adminId, adminData) => {
+    setIsSubmitting(true);
     try {
       await api.updateAdmin(adminId, adminData);
       fetchAdmins();
       setIsEditModalOpen(false);
-    } catch (error) {
+    } catch (error) => {
       setError('Failed to update admin');
       console.error('Failed to update admin', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -95,7 +90,6 @@ const AdminTable = () => {
         <h2>Admins</h2>
         <div>
           <button className="add-btn" onClick={() => setIsAddAdminModalOpen(true)}>+ Add New Admin</button>
-          <button className="add-btn" style={{marginLeft: '1rem'}} onClick={() => setIsAddSuperAdminModalOpen(true)}>+ Add New Superadmin</button>
         </div>
       </div>
       <table className="admins-table">
@@ -131,13 +125,10 @@ const AdminTable = () => {
           ))}
         </tbody>
       </table>
-      <Modal isOpen={isAddAdminModalOpen} onClose={() => setIsAddAdminModalOpen(false)} title="Add New Admin">
+      <Modal isOpen={isAddAdminModalOpen} onClose={() => setIsAddAdminModalOpen(false)} title="Add New Admin" isSubmitting={isSubmitting}>
         <AddAdminForm onAddAdmin={handleAddAdmin} onClose={() => setIsAddAdminModalOpen(false)} />
       </Modal>
-      <Modal isOpen={isAddSuperAdminModalOpen} onClose={() => setIsAddSuperAdminModalOpen(false)} title="Add New Superadmin">
-        <AddAdminForm onAddAdmin={handleAddSuperAdmin} onClose={() => setIsAddSuperAdminModalOpen(false)} />
-      </Modal>
-      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Admin">
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Admin" isSubmitting={isSubmitting}>
         <EditAdminForm admin={selectedAdmin} onUpdateAdmin={handleUpdateAdmin} onClose={() => setIsEditModalOpen(false)} />
       </Modal>
     </div>

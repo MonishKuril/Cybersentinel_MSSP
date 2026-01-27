@@ -3,6 +3,16 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const knex = require('../db');
 const { authMiddleware, adminAuthMiddleware, superAdminAuthMiddleware, mainSuperAdminAuthMiddleware, adminOrSuperAdminAuthMiddleware } = require('../middleware/auth');
+const winston = require('winston');
+
+// Create a new logger
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.File({ filename: 'debug.log' })
+  ],
+});
 
 // Helper to get user ID from username
 const getUserId = async (username) => {
@@ -17,11 +27,6 @@ router.post('/clients', [authMiddleware, adminOrSuperAdminAuthMiddleware], async
         const { name, url, description, graylog, logApi, adminId } = req.body;
         console.log('Request body:', req.body);
 
-        const existingClient = await knex('clients').where({ name }).first();
-        if (existingClient) {
-            return res.status(409).json({ error: "Client with this name already exists" });
-        }
-
         let assignedAdminId;
 
             // Superadmins can assign a client to a specific adminId.
@@ -34,10 +39,23 @@ router.post('/clients', [authMiddleware, adminOrSuperAdminAuthMiddleware], async
                 }
                 assignedAdminId = adminId;
             } else {
-                // Regular admins or superadmins creating for themselves. 
+                // Regular admins or superadmins creating for themselves.
                 assignedAdminId = req.user.id;
             }
             console.log('Assigned admin ID:', assignedAdminId);
+
+            // Log the name being checked for duplicates
+            logger.info(`Checking for duplicate client name: '${name}'`);
+
+            // Check for duplicate client name first to prevent race conditions
+            const duplicateCheck = await knex('clients').whereRaw('LOWER(name) = LOWER(?)', [name]).first();
+            if (duplicateCheck) {
+                console.log('Client name already exists');
+                return res.status(409).json({
+                    success: false,
+                    message: `A client with the name "${name}" already exists.`
+                });
+            }
 
             // Insert the client record and client-admin relationship atomically using a transaction
             try {
@@ -72,6 +90,15 @@ router.post('/clients', [authMiddleware, adminOrSuperAdminAuthMiddleware], async
                 res.status(201).json({ success: true, client: result });
 
             } catch (transactionError) {
+                // Check if it's a unique constraint violation (fallback check)
+                if (transactionError.errno === 19 ||
+                    transactionError.message.includes('UNIQUE constraint failed')) {
+                    console.log('Client name already exists (constraint violation)');
+                    return res.status(409).json({
+                        success: false,
+                        message: `A client with the name "${name}" already exists.`
+                    });
+                }
                 console.error('Database error inserting client:', transactionError);
                 return res.status(500).json({
                     success: false,
@@ -100,11 +127,6 @@ router.put('/clients/:id', [authMiddleware, adminAuthMiddleware], async (req, re
 
         if (!name || !url) {
             return res.status(400).json({ success: false, message: 'Name and URL are required' });
-        }
-
-        const existingClient = await knex('clients').where({ name }).whereNot({ id: clientId }).first();
-        if (existingClient) {
-            return res.status(409).json({ error: "Client with this name already exists" });
         }
 
         const updated = await knex('clients').where({ id: clientId }).update({

@@ -1,0 +1,212 @@
+
+> backend@1.0.0 start
+> node app.js
+
+info: Server running on https://192.168.1.189:7000
+Login attempt for: yash
+1. Fetching user from DB
+2. User found: yash
+3. User is not blocked
+4. Comparing passwords
+5. Password is valid
+6. MFA Status: true
+Login attempt for: yash
+1. Fetching user from DB
+2. User found: yash
+3. User is not blocked
+4. Comparing passwords
+5. Password is valid
+6. MFA Status: true
+7. Verifying MFA token
+8. MFA token is valid
+9. Login successful
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+News scraping initiated...
+Fetching news from: https://feeds.feedburner.com/TheHackersNews (The Hacker News)
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Successfully fetched 50 items from The Hacker News
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching Graylog data: connect EHOSTUNREACH 172.18.10.10:9000
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching Graylog data: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching Graylog data: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching Graylog data: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching Graylog data: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching log stats: connect EHOSTUNREACH 172.18.10.10:5000
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching log stats: timeout of 5000ms exceeded
+Error fetching log stats: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching log stats: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching Graylog data: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching Graylog data: timeout of 5000ms exceeded
+Error fetching Graylog data: connect EHOSTUNREACH 172.18.10.10:9000
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching Graylog data: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching Graylog data: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching log stats: connect EHOSTUNREACH 172.18.10.10:5000
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching log stats: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching log stats: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching log stats: timeout of 5000ms exceeded
+Error fetching Graylog data: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching Graylog data: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching Graylog data: connect EHOSTUNREACH 172.18.10.10:9000
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching Graylog data: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching Graylog data: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+Error fetching log stats: connect EHOSTUNREACH 172.18.10.10:5000
+Error fetching log stats: timeout of 5000ms exceeded
+Error fetching log stats: timeout of 5000ms exceeded
+Error fetching log stats: timeout of 5000ms exceeded
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔒 Admin or SuperAdmin auth check: user role = admin
+POST /clients route called
+Request body: {
+  name: 'JDCC-Bank',
+  url: 'http:/172.18.1.110:3000',
+  description: 'Jalna Bank',
+  graylog: {
+    host: 'http:/172.18.1.110:9000',
+    username: 'admin',
+    password: 'Virtual%09',
+    streamId: '69672f3cde2202c775c83897'
+  },
+  logApi: {
+    host: 'http:/172.18.1.110:5000',
+    username: 'admin',
+    password: 'Virtual%009'
+  },
+  adminId: null
+}
+Assigned admin ID: undefined
+New client ID: 9
+Knex query error: [Error: insert into `client_admins` (`client_id`, `user_id`) values (9, NULL) - SQLITE_CONSTRAINT: NOT NULL constraint failed: client_admins.user_id] {
+  errno: 19,
+  code: 'SQLITE_CONSTRAINT'
+} Object: {
+  __knexUid: '__knexUid1',
+  __knexTxId: '__knexUid1',
+  method: 'insert',
+  options: {},
+  timeout: false,
+  cancelOnTimeout: false,
+  bindings: [ 9, null ],
+  __knexQueryUid: 'PHUnnzue4UHXLRE2DLfhN',
+  sql: 'insert into `client_admins` (`client_id`, `user_id`) values (?, ?)',
+  returning: undefined,
+  queryContext: undefined
+}
+Client name already exists (constraint violation)
+🔐 Token verified for yash with role admin
+🔐 Token verified for yash with role admin
+🔒 Admin or SuperAdmin auth check: user role = admin
+POST /clients route called
+Request body: {
+  name: 'JDCC-bank',
+  url: 'http:/172.18.1.110:3000',
+  description: 'Jalna Bank',
+  graylog: {
+    host: 'http:/172.18.1.110:9000',
+    username: 'admin',
+    password: 'Virtual%09',
+    streamId: '69672f3cde2202c775c83897'
+  },
+  logApi: {
+    host: 'http:/172.18.1.110:5000',
+    username: 'admin',
+    password: 'Virtual%009'
+  },
+  adminId: null
+}
+Assigned admin ID: undefined
+New client ID: 9
+Knex query error: [Error: insert into `client_admins` (`client_id`, `user_id`) values (9, NULL) - SQLITE_CONSTRAINT: NOT NULL constraint failed: client_admins.user_id] {
+  errno: 19,
+  code: 'SQLITE_CONSTRAINT'
+} Object: {
+  __knexUid: '__knexUid1',
+  __knexTxId: '__knexUid1',
+  method: 'insert',
+  options: {},
+  timeout: false,
+  cancelOnTimeout: false,
+  bindings: [ 9, null ],
+  __knexQueryUid: 'vZcIvqxOuCcxNRozUaPZ-',
+  sql: 'insert into `client_admins` (`client_id`, `user_id`) values (?, ?)',
+  returning: undefined,
+  queryContext: undefined
+}
+Client name already exists (constraint violation)
+News scraping initiated...
+Fetching news from: https://feeds.feedburner.com/TheHackersNews (The Hacker News)
+Successfully fetched 50 items from The Hacker News
+Returning cached news

@@ -38,6 +38,12 @@ if (process.env.NODE_ENV !== 'production') {
 const app = express();
 const PORT = process.env.PORT || 7000;
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
 /* ---------------- SECURITY (Development Mode - No HTTPS enforcement) ---------------- */
 
 app.use(
@@ -67,8 +73,24 @@ app.use(
 
 /* ---------------- CORE MIDDLEWARE ---------------- */
 
-app.use(express.json());
+// Optimize express json parsing with size limits
+app.use(express.json({
+  limit: '10mb',
+  type: ['application/json', 'application/vnd.api+json']
+}));
 app.use(cookieParser(process.env.SESSION_SECRET));
+
+// Add compression middleware to reduce response sizes
+const compression = require('compression');
+app.use(compression());
+
+// Add CORS with specific configuration for better performance
+const cors = require('cors');
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' ? false : true, // Allow all origins in dev
+  credentials: true,
+  optionsSuccessStatus: 200
+}));
 
 /* ---------------- API ROUTES ---------------- */
 
@@ -113,4 +135,3 @@ https.createServer(options, app).listen(PORT, '0.0.0.0', () => {
 });
 
 module.exports = app;
-
