@@ -1,0 +1,2 @@
+Installation command for MSSP, 
+ curl -O https://raw.githubusercontent.com/MonishKuril/Cybersentinel_MSSP/main/deploy.sh && chmod +x deploy.sh && ./deploy.sh
