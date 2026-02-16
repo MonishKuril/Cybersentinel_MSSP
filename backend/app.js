@@ -3,8 +3,7 @@ const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const path = require('path');
 const winston = require('winston');
-const https = require('https');
-const fs = require('fs');
+const http = require('http');
 
 const authRoutes = require('./routes/auth');
 const clientsRoutes = require('./routes/clients');
@@ -125,13 +124,8 @@ app.use((err, req, res, next) => {
 
 /* ---------------- START SERVER ---------------- */
 
-const options = {
-  key: fs.readFileSync(path.join(__dirname, 'ssl/key.pem')),
-  cert: fs.readFileSync(path.join(__dirname, 'ssl/cert.pem')),
-};
-
-https.createServer(options, app).listen(PORT, '0.0.0.0', () => {
-  logger.info(`Server running on https://192.168.1.189:${PORT}`);
+http.createServer(app).listen(PORT, '0.0.0.0', () => {
+  logger.info(`Server running on http://192.168.1.189:${PORT}`);
 });
 
 module.exports = app;

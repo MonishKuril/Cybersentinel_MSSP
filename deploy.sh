@@ -59,21 +59,6 @@ ensure_env() {
     ERR_FILE="mssp_server_error.log"
 }
 
-# 2. SSL Generation
-generate_ssl() {
-    print_msg "🔐 Checking SSL Configuration..." $BLUE
-    SSL_DIR="$BACKEND_DIR/ssl"
-    mkdir -p "$SSL_DIR"
-    
-    if [ ! -f "$SSL_DIR/cert.pem" ] || [ ! -f "$SSL_DIR/key.pem" ]; then
-        print_msg "⚠️  SSL Certificates missing. Generating self-signed certs..." $YELLOW
-        openssl req -x509 -newkey rsa:4096 -keyout "$SSL_DIR/key.pem" -out "$SSL_DIR/cert.pem" -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Cybersentinel/OU=Security/CN=localhost" 2>/dev/null
-        print_msg "✅ SSL Certificates generated in $SSL_DIR" $GREEN
-    else
-        print_msg "✅ SSL Certificates present." $GREEN
-    fi
-}
-
 # 3. Port Management
 kill_port() {
     PORT=$1
@@ -154,7 +139,7 @@ start_server() {
         IP=$(hostname -I | awk '{print $1}')
         print_msg "✅ Server is RUNNING" $GREEN
         print_msg "   - PID:  $PID" $NC
-        print_msg "   - URL:  https://$IP:$SERVER_PORT" $CYAN
+        print_msg "   - URL:  http://$IP:$SERVER_PORT" $CYAN
         print_msg "   - Logs: $LOG_FILE" $NC
     else
         print_msg "❌ Server failed to start. Check $ERR_FILE" $RED
@@ -197,7 +182,6 @@ case "$1" in
     install)
         print_header
         ensure_env
-        generate_ssl
         install_and_build
         ;;
     start)
@@ -213,7 +197,6 @@ case "$1" in
         # Default behavior: Install/Verify -> Start
         print_header
         ensure_env
-        generate_ssl
         install_and_build
         start_server
         ;;
