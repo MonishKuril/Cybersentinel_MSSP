@@ -44,6 +44,8 @@ This table stores information about the clients being monitored.
 | `log_api_host` | STRING | | Hostname for the client's Log API. |
 | `log_api_username` | STRING | | Username for the client's Log API. |
 | `log_api_password` | STRING | | Password for the client's Log API. |
+| `sso_username` | STRING | | Username presented to the client's SIEM UI when launched (legacy field, still used as a display/launch-user hint). |
+| `sso_client_id` | STRING | | The `aud` claim value for this client's SIEM SSO JWTs. Must match the `CLIENT_ID` configured on the client's SIEM side. |
 | `created_at` | DATETIME | | Timestamp of when the record was created. |
 | `updated_at` | DATETIME | | Timestamp of when the record was last updated. |
 

@@ -49,7 +49,7 @@ const ManagementView = ({ user }) => {
     url: '',
     description: '',
     graylog: { host: '', username: '', password: '', streamId: '' },
-    logApi: { host: '', username: '', password: '' },
+    logApi: { host: '', username: '', password: '', ssoUsername: '', ssoClientId: '' },
     adminId: null,
   });
 
@@ -112,6 +112,8 @@ const ManagementView = ({ user }) => {
           host: editingClient.log_api_host || '',
           username: editingClient.log_api_username || '',
           password: '',
+          ssoUsername: editingClient.sso_username || '',
+          ssoClientId: editingClient.sso_client_id || '',
         },
       });
     } else {

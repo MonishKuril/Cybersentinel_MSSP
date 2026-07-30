@@ -54,6 +54,8 @@ router.post('/clients', [authMiddleware, adminOrSuperAdminAuthMiddleware], async
                         log_api_host: logApi ? logApi.host : null,
                         log_api_username: logApi ? logApi.username : null,
                         log_api_password: logApi ? logApi.password : null,
+                        sso_username: logApi ? (logApi.ssoUsername || null) : null,
+                        sso_client_id: logApi ? (logApi.ssoClientId || null) : null,
                     });
                     console.log('New client ID:', newClientId);
 
@@ -102,6 +104,19 @@ router.put('/clients/:id', [authMiddleware, adminAuthMiddleware], async (req, re
             return res.status(400).json({ success: false, message: 'Name and URL are required' });
         }
 
+        const user = await knex('users').where({ username: req.user.username }).first('id');
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const hasAccess = await knex('client_admins')
+            .where({ client_id: clientId, user_id: user.id })
+            .first();
+
+        if (!hasAccess) {
+            return res.status(403).json({ success: false, message: 'You are not authorized to perform this action' });
+        }
+
         const existingClient = await knex('clients').where({ name }).whereNot({ id: clientId }).first();
         if (existingClient) {
             return res.status(409).json({ error: "Client with this name already exists" });
@@ -118,6 +133,8 @@ router.put('/clients/:id', [authMiddleware, adminAuthMiddleware], async (req, re
             log_api_host: logApi ? logApi.host : null,
             log_api_username: logApi ? logApi.username : null,
             log_api_password: logApi ? logApi.password : null,
+            sso_username: logApi ? (logApi.ssoUsername || null) : null,
+            sso_client_id: logApi ? (logApi.ssoClientId || null) : null,
         });
 
         if (!updated) {
@@ -135,6 +152,20 @@ router.put('/clients/:id', [authMiddleware, adminAuthMiddleware], async (req, re
 router.delete('/clients/:id', [authMiddleware, adminAuthMiddleware], async (req, res) => {
     try {
         const clientId = parseInt(req.params.id);
+
+        const user = await knex('users').where({ username: req.user.username }).first('id');
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const hasAccess = await knex('client_admins')
+            .where({ client_id: clientId, user_id: user.id })
+            .first();
+
+        if (!hasAccess) {
+            return res.status(403).json({ success: false, message: 'You are not authorized to perform this action' });
+        }
+
         const deleted = await knex('clients').where({ id: clientId }).del();
 
         if (!deleted) {

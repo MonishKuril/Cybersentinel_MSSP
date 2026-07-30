@@ -124,11 +124,3 @@ export const getClientLogStats = (clientId) => {
   return fetch(`/api/clients/${clientId}/logstats`).then(handleResponse);
 };
 
-export const getSIEMToken = () => {
-  return fetch('/api/auth/siem-access-token', {
-    method: 'POST',
-    credentials: 'include' // Include MSSP auth cookie
-  }).then(handleResponse);
-};
-
-

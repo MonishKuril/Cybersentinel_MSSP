@@ -129,10 +129,10 @@ const EditClientForm = ({ clientData, setClientData, error }) => {
           <TextField
             id="editLogApiUsername"
             name="username"
-            label="Username"
+            label="Log API Username (Service Account)"
             value={clientData.logApi.username}
             onChange={(e) => handleNestedChange(e, 'logApi')}
-            placeholder="Username"
+            placeholder="Log API Username (e.g. mssp_service)"
             fullWidth
           />
         </div>
@@ -144,6 +144,28 @@ const EditClientForm = ({ clientData, setClientData, error }) => {
             value={clientData.logApi.password}
             onChange={(e) => handleNestedChange(e, 'logApi')}
             placeholder="New Password (leave blank to keep unchanged)"
+            fullWidth
+          />
+        </div>
+        <div className="form-group">
+          <TextField
+            id="editLogApiSsoUsername"
+            name="ssoUsername"
+            label="SSO Username (Launch User)"
+            value={clientData.logApi.ssoUsername || ''}
+            onChange={(e) => handleNestedChange(e, 'logApi')}
+            placeholder="SSO Username (e.g. csadmin)"
+            fullWidth
+          />
+        </div>
+        <div className="form-group">
+          <TextField
+            id="editLogApiSsoClientId"
+            name="ssoClientId"
+            label="SIEM SSO Client ID (aud)"
+            value={clientData.logApi.ssoClientId || ''}
+            onChange={(e) => handleNestedChange(e, 'logApi')}
+            placeholder="Client ID (e.g. client-acme-01)"
             fullWidth
           />
         </div>

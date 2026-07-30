@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import './ClientCard.css';
 import { abbreviateNumber } from '../utils/formatters';
 import Sparkline from './Sparkline';
-import * as api from '../services/api';
 
 const StatNumber = ({ value, label, colorClass }) => {
     const [isHovered, setIsHovered] = useState(false);
@@ -33,24 +32,24 @@ const ClientCard = ({ client, logStats = { total: 0, major: 0, normal: 0 }, hist
     return client.graylog_host || client.log_api_host;
   };
 
-  // Function to handle SIEM SSO access
-  const handleSIEMAccess = async (client) => {
-    console.log('Redirecting to SIEM for client:', client); // Add this log
+  // Helper to ensure URL has a valid scheme (http:// or https://)
+  const getNormalizedUrl = (rawUrl) => {
+    if (!rawUrl) return '';
+    const trimmed = rawUrl.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    return `http://${trimmed}`;
+  };
+
+  // Function to handle SIEM SSO access. Opens the tab synchronously (not
+  // after an await) so browsers don't treat it as a blocked popup; the
+  // console mints the token and hands it off server-side via a form POST.
+  const handleSIEMAccess = (client) => {
+    console.log('Launching SIEM SSO for client:', client);
     setIsRedirecting(true);
     try {
-      // Request MSSP to generate SIEM access token
-      const response = await api.getSIEMToken();
-
-      if (response.success) {
-        // Redirect to client's SIEM endpoint with the SSO token
-        // Use the client's URL as the base and append the SSO login path
-        const siemBaseUrl = new URL(client.url).origin;
-        const redirectUrl = `${siemBaseUrl}/mssp-login?token=${encodeURIComponent(response.siemToken)}`;
-        window.open(redirectUrl, '_blank');
-      } else {
-        console.error('Failed to get SIEM access token:', response.message);
-        alert('Failed to access SIEM dashboard. Please try again.');
-      }
+      window.open(`/api/auth/siem-launch/${client.id}`, '_blank');
     } catch (error) {
       console.error('Error accessing SIEM:', error);
       alert('Error accessing SIEM dashboard. Please try again.');
@@ -61,7 +60,8 @@ const ClientCard = ({ client, logStats = { total: 0, major: 0, normal: 0 }, hist
 
   // Function to handle regular client access (existing functionality)
   const handleRegularAccess = (client) => {
-    window.open(client.url, '_blank');
+    const targetUrl = getNormalizedUrl(client.url);
+    window.open(targetUrl, '_blank');
   };
 
   // Enhanced click handler for client card

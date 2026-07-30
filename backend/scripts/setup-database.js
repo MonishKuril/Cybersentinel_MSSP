@@ -84,7 +84,9 @@ async function setupDatabase() {
         graylog_stream_id: { type: 'string' },
         log_api_host: { type: 'string' },
         log_api_username: { type: 'string' },
-        log_api_password: { type: 'string' }
+        log_api_password: { type: 'string' },
+        sso_username: { type: 'string' },
+        sso_client_id: { type: 'string' }
     };
 
     for (const [column, properties] of Object.entries(clientColumns)) {

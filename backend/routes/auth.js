@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const bcrypt = require('bcrypt');
@@ -8,6 +9,25 @@ const knex = require('../db');
 require('dotenv').config();
 
 const { authMiddleware } = require('../middleware/auth');
+
+// SIEM SSO signing key (RS256). The private key never leaves the console.
+const SIEM_SSO_KID = process.env.SIEM_SSO_KID;
+const SIEM_SSO_PRIVATE_KEY = process.env.SIEM_SSO_PRIVATE_KEY
+  ? Buffer.from(process.env.SIEM_SSO_PRIVATE_KEY, 'base64').toString('utf8')
+  : null;
+
+const escapeHtml = (str) => String(str)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
+const renderSsoError = (res, status, message) => {
+  res.status(status).type('html').send(
+    `<!doctype html><html><body><p>${escapeHtml(message)}</p></body></html>`
+  );
+};
 
 // Generate backup codes
 const generateBackupCodes = () => {
@@ -66,12 +86,12 @@ const verifyMFAToken = async (username, token) => {
     return false;
   }
 
-  // Check TOTP token
+  // Check TOTP token (window: 4 = ±2 min tolerance for client/server clock drift)
   const verified = speakeasy.totp.verify({
     secret: user.mfa_secret,
     encoding: 'base32',
     token: token,
-    window: 2
+    window: 4
   });
 
   if (verified) {
@@ -185,41 +205,87 @@ router.post('/logout', (req, res) => {
   res.json({ success: true, message: "Logout successful" });
 });
 
-// Generate short-lived SIEM access token
-router.post('/siem-access-token', authMiddleware, async (req, res) => {
-  try {
-    const user = req.user; // User object now comes from authMiddleware
+// Helper to ensure a client URL has a valid scheme (mirrors the frontend's getNormalizedUrl)
+const getNormalizedUrl = (rawUrl) => {
+  if (!rawUrl) return '';
+  const trimmed = rawUrl.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  return `http://${trimmed}`;
+};
 
-    // Validate environment configuration
-    if (!process.env.SIEM_SHARED_SECRET) {
-      console.error('SIEM_SHARED_SECRET environment variable not set');
-      return res.status(500).json({
-        success: false,
-        message: 'Server configuration error: SIEM_SHARED_SECRET not set'
-      });
+// Launch SSO into a client's SIEM: mints a short-lived RS256 JWT and hands it
+// off via an auto-submitting form POST (a real top-level navigation, not
+// fetch/XHR - the SIEM needs that to write to its own origin's localStorage).
+router.get('/siem-launch/:clientId', authMiddleware, async (req, res) => {
+  try {
+    const user = req.user;
+    const clientId = req.params.clientId;
+
+    if (!SIEM_SSO_PRIVATE_KEY || !SIEM_SSO_KID) {
+      console.error('SIEM_SSO_PRIVATE_KEY / SIEM_SSO_KID environment variables not set');
+      return renderSsoError(res, 500, 'Server configuration error: SIEM SSO signing key not set');
     }
 
-    // Generate a short-lived token for SIEM access
-    const siemToken = jwt.sign(
+    const client = await knex('clients').where({ id: clientId }).first();
+    if (!client) {
+      return renderSsoError(res, 404, 'Client not found');
+    }
+
+    // Security check: if user is admin, ensure they have access to this client
+    if (user.role === 'admin') {
+      const access = await knex('client_admins')
+        .where({ client_id: clientId, user_id: user.id })
+        .first();
+
+      if (!access) {
+        return renderSsoError(res, 403, 'Unauthorized access to this client');
+      }
+    }
+
+    if (!client.sso_client_id) {
+      return renderSsoError(res, 400, 'This client is not configured for SIEM SSO');
+    }
+
+    let siemOrigin;
+    try {
+      siemOrigin = new URL(getNormalizedUrl(client.url)).origin;
+    } catch (err) {
+      return renderSsoError(res, 500, 'Client has an invalid SIEM URL configured');
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const token = jwt.sign(
       {
-        username: user.username,
-        role: user.role,
-        source: 'mssp'
+        iss: 'mssp-console',
+        sub: 'mssp',
+        aud: client.sso_client_id,
+        jti: crypto.randomUUID(),
+        iat: now,
+        nbf: now - 60,
+        exp: now + 60,
+        analyst_id: String(user.id),
+        analyst_username: user.username,
+        analyst_role: user.role,
       },
-      process.env.SIEM_SHARED_SECRET,
-      { expiresIn: '2m' }
+      SIEM_SSO_PRIVATE_KEY,
+      { algorithm: 'RS256', keyid: SIEM_SSO_KID }
     );
 
-    res.json({
-      success: true,
-      siemToken
-    });
+    const actionUrl = `${siemOrigin}/api/auth/sso/mssp`;
+    res.type('html').send(`<!doctype html>
+<html>
+<body>
+<form id="sso" method="POST" action="${escapeHtml(actionUrl)}">
+<input type="hidden" name="token" value="${escapeHtml(token)}">
+</form>
+<script>document.getElementById('sso').submit();</script>
+</body>
+</html>`);
   } catch (err) {
-    console.error('Error generating SIEM access token:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to generate SIEM access token'
-    });
+    console.error('Error generating SIEM SSO launch token:', err);
+    renderSsoError(res, 500, 'Failed to generate SIEM SSO launch token');
   }
 });
 
