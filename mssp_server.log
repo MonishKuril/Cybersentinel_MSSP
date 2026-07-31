@@ -1,8 +1,0 @@
-
-> backend@1.0.0 start
-> node app.js
-
-info: Server running on http://192.168.1.189:7000
-News scraping initiated...
-Fetching news from: https://feeds.feedburner.com/TheHackersNews (The Hacker News)
-Successfully fetched 50 items from The Hacker News
