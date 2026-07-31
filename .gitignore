@@ -1,0 +1,17 @@
+# Environment / secrets
+**/.env
+**/.env.local
+
+# SSL certificates / keys
+**/ssl/
+
+# Database files
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log

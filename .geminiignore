@@ -1,0 +1,21 @@
+# Dependencies
+**/node_modules/
+
+# React/Vite/Next build
+frontend/build/
+frontend/dist/
+frontend/.next/
+
+# Backend build
+backend/build/
+backend/dist/
+
+# Git
+.git/
+
+# Logs
+*.log
+*.pid
+
+# Coverage
+coverage/
