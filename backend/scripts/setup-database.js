@@ -100,6 +100,22 @@ async function setupDatabase() {
         }
     }
 
+    // 3.1 Enforce uniqueness on sso_client_id (the SSO 'aud' claim) so two
+    // clients can never share the same identifier - SQLite allows multiple
+    // NULLs through a unique index, so unconfigured clients are unaffected.
+    const ssoClientIdIndexExists = await knex.raw(
+        "SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'clients' AND name = 'clients_sso_client_id_unique'"
+    );
+    if (ssoClientIdIndexExists.length === 0) {
+        console.log("Unique index on 'sso_client_id' not found. Creating it now...");
+        await knex.schema.alterTable('clients', (table) => {
+            table.unique(['sso_client_id']);
+        });
+        console.log("✅ Unique index on 'sso_client_id' created successfully.");
+    } else {
+        console.log("✅ Unique index on 'sso_client_id' already exists.");
+    }
+
 
     // 4. Create 'client_admins' table if it doesn't exist
     const clientAdminsTableExists = await knex.schema.hasTable('client_admins');

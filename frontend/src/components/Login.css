@@ -198,6 +198,9 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .mfa-modal-content {
@@ -205,15 +208,27 @@
   border: 1px solid var(--card-border-color);
   padding: 2rem;
   border-radius: 20px;
-  width: 90%;
-  max-width: 500px;
+  width: min(75vw, 700px);
+  aspect-ratio: 3 / 4;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
   color: var(--primary-text);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
 .mfa-modal-content h2 {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+}
+
+.mfa-setup-steps {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding-right: 0.25rem;
 }
 
 .mfa-setup-steps .step {

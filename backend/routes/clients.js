@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const http = require('http');
+const https = require('https');
 const fetch = require('node-fetch');
 const { authMiddleware } = require('../middleware/auth');
 const knex = require('../db');
@@ -42,11 +43,14 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }
 
     if (req.user.role === 'admin') {
-        const user = await knex('users').where({ username: req.user.username }).first();
+        const user = await knex('users').where({ username: req.user.username }).first('id');
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
-        if (client.admin_id !== user.id) {
+        const hasAccess = await knex('client_admins')
+            .where({ client_id: client.id, user_id: user.id })
+            .first();
+        if (!hasAccess) {
             return res.status(403).json({ success: false, message: 'You are not authorized to view this client' });
         }
     }
@@ -128,6 +132,11 @@ router.get('/:id/logs', authMiddleware, async (req, res) => {
   }
 });
 
+// In-memory SIEM authentication token cache with 12-hour TTL
+// Structure: { [clientId]: { token: string, expiresAt: number } }
+const siemTokenCache = new Map();
+const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+
 router.get('/:id/logstats', authMiddleware, async (req, res) => {
   const clientId = parseInt(req.params.id);
 
@@ -143,33 +152,72 @@ router.get('/:id/logstats', authMiddleware, async (req, res) => {
     }
 
     let logApiHost = client.log_api_host;
-    if (!logApiHost.startsWith('http')) {
+    if (!logApiHost.startsWith('http://') && !logApiHost.startsWith('https://')) {
       logApiHost = `http://${logApiHost}`;
     }
 
     const axios = require('axios');
+    const isHttps = logApiHost.startsWith('https://');
 
-    // Login to get token
-    const tokenResponse = await axios.post(`${logApiHost}/api/auth/login`, {
-      username: client.log_api_username,
-      password: client.log_api_password
-    }, {
-      timeout: 5000, // 5 second timeout
+    // TODO(security): Scoped HTTPS agent for self-signed certificates in client SIEM log APIs
+    const axiosConfig = {
+      timeout: 5000,
       headers: { 'Content-Type': 'application/json' }
-    });
+    };
 
-    if (!tokenResponse.data.token) {
-      throw new Error('Failed to get authentication token');
+    if (isHttps) {
+      axiosConfig.httpsAgent = new https.Agent({ rejectUnauthorized: false });
+    }
+
+    // Check if valid token exists in cache (with 1-minute safety margin)
+    const now = Date.now();
+    let token;
+    const cachedEntry = siemTokenCache.get(clientId);
+
+    if (cachedEntry && cachedEntry.expiresAt > now + 60000) {
+      token = cachedEntry.token;
+    } else {
+      // Perform single login request to SIEM API
+      const tokenResponse = await axios.post(`${logApiHost}/api/auth/login`, {
+        username: client.log_api_username,
+        password: client.log_api_password
+      }, axiosConfig);
+
+      if (!tokenResponse.data.token) {
+        throw new Error('Failed to get authentication token');
+      }
+
+      token = tokenResponse.data.token;
+      // Cache token for 12 hours
+      siemTokenCache.set(clientId, {
+        token: token,
+        expiresAt: now + TWELVE_HOURS_MS
+      });
     }
 
     // Get stats with the token
-    const statsResponse = await axios.get(`${logApiHost}/api/logs/stats/overview?timeRange=24h`, {
+    const statsAxiosConfig = {
       headers: {
-        'Authorization': `Bearer ${tokenResponse.data.token}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      timeout: 5000 // 5 second timeout
-    });
+      timeout: 5000
+    };
+
+    if (isHttps) {
+      statsAxiosConfig.httpsAgent = new https.Agent({ rejectUnauthorized: false });
+    }
+
+    let statsResponse;
+    try {
+      statsResponse = await axios.get(`${logApiHost}/api/logs/stats/overview?timeRange=24h`, statsAxiosConfig);
+    } catch (apiError) {
+      // If 401 Unauthorized occurs, invalidate cached token so next request re-authenticates
+      if (apiError.response && apiError.response.status === 401) {
+        siemTokenCache.delete(clientId);
+      }
+      throw apiError;
+    }
 
     const responseData = {
       success: true,

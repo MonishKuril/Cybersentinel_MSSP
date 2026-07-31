@@ -112,6 +112,30 @@ export const toggleSuperAdminBlock = (username, isBlocked) => {
   }).then(handleResponse);
 };
 
+export const deleteAdmin = (adminId) => {
+  return fetch(`/api/admin/admins/${adminId}`, {
+    method: 'DELETE',
+  }).then(handleResponse);
+};
+
+export const deleteSuperAdmin = (username) => {
+  return fetch(`/api/admin/superadmins/${username}`, {
+    method: 'DELETE',
+  }).then(handleResponse);
+};
+
+export const resetAdminMfa = (adminId) => {
+  return fetch(`/api/admin/admins/${adminId}/reset-mfa`, {
+    method: 'PATCH',
+  }).then(handleResponse);
+};
+
+export const resetSuperAdminMfa = (username) => {
+  return fetch(`/api/admin/superadmins/${username}/reset-mfa`, {
+    method: 'PATCH',
+  }).then(handleResponse);
+};
+
 export const getNews = () => {
   return fetch('/api/news/scrape').then(handleResponse);
 };

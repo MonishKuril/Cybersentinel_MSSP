@@ -149,10 +149,16 @@
     border-color: var(--secondary-text);
 }
 
-.delete-client-btn:hover, .block-admin-btn:hover {
+.delete-client-btn:hover, .block-admin-btn:hover, .delete-admin-btn:hover {
     background-color: var(--major-logs-color);
     color: white;
     border-color: var(--major-logs-color);
+}
+
+.reset-mfa-btn:hover {
+    background-color: var(--total-logs-color);
+    color: white;
+    border-color: var(--total-logs-color);
 }
 
 .admin-clients-dropdown {

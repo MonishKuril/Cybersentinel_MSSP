@@ -2,25 +2,7 @@
 > backend@1.0.0 start
 > node app.js
 
-info: Server running on https://192.168.1.189:7000
-GET /dashboard
-GET /static/js/main.2d275dfe.js
-GET /static/css/main.94a9384d.css
-GET /api/auth/check
-GET /favicon.ico
-GET /VG_logo.png
-GET /cybersentinel_logo.jpg
-GET /favicon.ico
-GET /static/media/background.1087da06f0b393974c3f.jpg
-GET /login
-GET /static/js/main.2d275dfe.js
-GET /static/css/main.94a9384d.css
-GET /VG_logo.png
-GET /cybersentinel_logo.jpg
-GET /static/media/background.1087da06f0b393974c3f.jpg
-GET /login
-GET /static/js/main.2d275dfe.js
-GET /static/css/main.94a9384d.css
-GET /VG_logo.png
-GET /cybersentinel_logo.jpg
-GET /static/media/background.1087da06f0b393974c3f.jpg
+info: Server running on http://192.168.1.189:7000
+News scraping initiated...
+Fetching news from: https://feeds.feedburner.com/TheHackersNews (The Hacker News)
+Successfully fetched 50 items from The Hacker News

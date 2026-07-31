@@ -7,6 +7,7 @@ import AddAdminForm from './AddAdminForm';
 import AddSuperAdminForm from './AddSuperAdminForm';
 import EditAdminForm from './EditAdminForm';
 import SuperAdminPanel from './SuperAdminPanel';
+import ConfirmModal from './ConfirmModal';
 
 import FormWrapper from './FormWrapper';
 
@@ -20,6 +21,11 @@ const ManagementView = ({ user }) => {
   const [addingClientForAdmin, setAddingClientForAdmin] = useState(null);
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // State for the Delete Admin / Reset MFA confirmation modal
+  const [adminConfirmAction, setAdminConfirmAction] = useState(null); // { type: 'delete' | 'reset-mfa', admin }
+  const [adminConfirmError, setAdminConfirmError] = useState(null);
+  const [isAdminConfirmSubmitting, setIsAdminConfirmSubmitting] = useState(false);
 
   // State for the new AddAdmin form
   const [newAdminData, setNewAdminData] = useState({
@@ -135,6 +141,35 @@ const ManagementView = ({ user }) => {
       setEditingAdmin(null);
       setEditingClient(null);
   }
+
+  const openAdminConfirm = (type, admin) => {
+    setAdminConfirmAction({ type, admin });
+    setAdminConfirmError(null);
+  };
+
+  const closeAdminConfirm = () => {
+    setAdminConfirmAction(null);
+    setAdminConfirmError(null);
+  };
+
+  const handleAdminConfirmAction = async () => {
+    if (!adminConfirmAction) return;
+    setIsAdminConfirmSubmitting(true);
+    setAdminConfirmError(null);
+    try {
+      if (adminConfirmAction.type === 'delete') {
+        await api.deleteAdmin(adminConfirmAction.admin.id);
+      } else if (adminConfirmAction.type === 'reset-mfa') {
+        await api.resetAdminMfa(adminConfirmAction.admin.id);
+      }
+      closeAdminConfirm();
+      fetchData();
+    } catch (err) {
+      setAdminConfirmError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setIsAdminConfirmSubmitting(false);
+    }
+  };
 
   const handleAddAdminSubmit = async (e) => {
     e.preventDefault();
@@ -375,6 +410,8 @@ const ManagementView = ({ user }) => {
                         <button className="table-btn block-admin-btn" onClick={() => api.toggleAdminBlock(admin.id, admin.blocked).then(fetchData)}>
                           {admin.blocked ? 'Unblock' : 'Block'}
                         </button>
+                        <button className="table-btn reset-mfa-btn" onClick={() => openAdminConfirm('reset-mfa', admin)}>Reset MFA</button>
+                        <button className="table-btn delete-admin-btn" onClick={() => openAdminConfirm('delete', admin)}>Delete</button>
                       </td>
                     </tr>
                   )
@@ -396,6 +433,21 @@ const ManagementView = ({ user }) => {
           </div>
         )}
         {content}
+        <ConfirmModal
+          isOpen={!!adminConfirmAction}
+          title={adminConfirmAction?.type === 'delete' ? 'Delete Admin' : 'Reset MFA'}
+          message={
+            adminConfirmAction?.type === 'delete'
+              ? `Delete admin "${adminConfirmAction?.admin?.name}"? This permanently removes their account and any clients assigned only to them. This cannot be undone.`
+              : `Reset MFA for "${adminConfirmAction?.admin?.name}"? They will need to scan a new QR code and set up MFA again on their next login.`
+          }
+          confirmText={adminConfirmAction?.type === 'delete' ? 'Delete Admin' : 'Reset MFA'}
+          isDanger={adminConfirmAction?.type === 'delete'}
+          isSubmitting={isAdminConfirmSubmitting}
+          error={adminConfirmError}
+          onConfirm={handleAdminConfirmAction}
+          onCancel={closeAdminConfirm}
+        />
       </div>
     );
   }

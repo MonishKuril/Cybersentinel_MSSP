@@ -26,6 +26,14 @@
     cursor: not-allowed;
 }
 
+.submit-btn.danger {
+    background-color: var(--major-logs-color);
+}
+
+.submit-btn.danger:hover {
+    background-color: color-mix(in srgb, var(--major-logs-color) 80%, black);
+}
+
 .cancel-btn {
     background-color: transparent;
     color: var(--primary-text);

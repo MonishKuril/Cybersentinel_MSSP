@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import * as api from '../services/api';
+import ConfirmModal from './ConfirmModal';
 import './SuperAdminTable.css';
 import './AdminTable.css'; // Reusing some styles
 
@@ -7,6 +8,11 @@ const SuperAdminTable = () => {
   const [superAdmins, setSuperAdmins] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // State for the Delete Superadmin / Reset MFA confirmation modal
+  const [confirmAction, setConfirmAction] = useState(null); // { type: 'delete' | 'reset-mfa', admin }
+  const [confirmError, setConfirmError] = useState(null);
+  const [isConfirmSubmitting, setIsConfirmSubmitting] = useState(false);
 
   useEffect(() => {
     fetchSuperAdmins();
@@ -34,6 +40,35 @@ const SuperAdminTable = () => {
         setError('Failed to toggle superadmin block status');
         console.error('Failed to toggle superadmin block status', error);
       }
+    }
+  };
+
+  const openConfirm = (type, admin) => {
+    setConfirmAction({ type, admin });
+    setConfirmError(null);
+  };
+
+  const closeConfirm = () => {
+    setConfirmAction(null);
+    setConfirmError(null);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmAction) return;
+    setIsConfirmSubmitting(true);
+    setConfirmError(null);
+    try {
+      if (confirmAction.type === 'delete') {
+        await api.deleteSuperAdmin(confirmAction.admin.username);
+      } else if (confirmAction.type === 'reset-mfa') {
+        await api.resetSuperAdminMfa(confirmAction.admin.username);
+      }
+      closeConfirm();
+      fetchSuperAdmins();
+    } catch (err) {
+      setConfirmError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setIsConfirmSubmitting(false);
     }
   };
 
@@ -74,11 +109,28 @@ const SuperAdminTable = () => {
               </td>
               <td className="table-actions">
                 <button className="table-btn" onClick={() => handleToggleBlockSuperAdmin(admin.username, admin.blocked)}>{admin.blocked ? 'Unblock' : 'Block'}</button>
+                <button className="table-btn reset-mfa-btn" onClick={() => openConfirm('reset-mfa', admin)}>Reset MFA</button>
+                <button className="table-btn delete-admin-btn" onClick={() => openConfirm('delete', admin)}>Delete</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      <ConfirmModal
+        isOpen={!!confirmAction}
+        title={confirmAction?.type === 'delete' ? 'Delete Superadmin' : 'Reset MFA'}
+        message={
+          confirmAction?.type === 'delete'
+            ? `Delete superadmin "${confirmAction?.admin?.name}"? This permanently removes their account and any clients assigned only to them. This cannot be undone.`
+            : `Reset MFA for "${confirmAction?.admin?.name}"? They will need to scan a new QR code and set up MFA again on their next login.`
+        }
+        confirmText={confirmAction?.type === 'delete' ? 'Delete Superadmin' : 'Reset MFA'}
+        isDanger={confirmAction?.type === 'delete'}
+        isSubmitting={isConfirmSubmitting}
+        error={confirmError}
+        onConfirm={handleConfirmAction}
+        onCancel={closeConfirm}
+      />
     </div>
   );
 };

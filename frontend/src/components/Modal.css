@@ -12,19 +12,24 @@
 }
 
 .modal-content {
-  background: white;
+  background: var(--popup-bg);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  color: var(--primary-text);
   padding: 2rem;
   border-radius: 8px;
   max-width: 500px;
   width: 100%;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 5px 15px var(--shadow-color);
+  border: 1px solid var(--border-color);
+  transition: var(--theme-transition);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 1rem;
   margin-bottom: 1rem;
 }
@@ -32,6 +37,7 @@
 .modal-title {
   font-size: 1.5rem;
   font-weight: 500;
+  color: var(--primary-text);
 }
 
 .modal-close-btn {
@@ -39,4 +45,5 @@
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
+  color: var(--primary-text);
 }

@@ -150,16 +150,19 @@ const Login = () => {
           <div className="step">
             <h3>Step 3: Verify Setup</h3>
             <p>Enter the 6-digit code from your app.</p>
-            <input
-              type="text"
-              value={verifyMfaCode}
-              onChange={(e) => setVerifyMfaCode(e.target.value)}
-              placeholder="000000"
-              maxLength="6"
-            />
-            <button onClick={verifyMFASetup} className="verify-btn" disabled={isLoading}>
-              {isLoading ? 'Verifying...' : 'Verify & Complete Setup'}
-            </button>
+            <form onSubmit={(e) => { e.preventDefault(); verifyMFASetup(); }}>
+              <input
+                type="text"
+                value={verifyMfaCode}
+                onChange={(e) => setVerifyMfaCode(e.target.value)}
+                placeholder="000000"
+                maxLength="6"
+                autoFocus
+              />
+              <button type="submit" className="verify-btn" disabled={isLoading}>
+                {isLoading ? 'Verifying...' : 'Verify & Complete Setup'}
+              </button>
+            </form>
           </div>
           {error && <div className="error-message" style={{marginTop: '1rem'}}>{error}</div>}
         </div>

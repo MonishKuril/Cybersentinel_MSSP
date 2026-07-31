@@ -2,7 +2,6 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const path = require('path');
-const winston = require('winston');
 const http = require('http');
 
 const authRoutes = require('./routes/auth');
@@ -10,41 +9,18 @@ const clientsRoutes = require('./routes/clients');
 const adminRoutes = require('./routes/admin');
 const newsRoutes = require('./routes/news');
 const { authMiddleware } = require('./middleware/auth');
+const logger = require('./logger');
 
 require('dotenv').config();
-
-/* ---------------- LOGGER ---------------- */
-
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
-  transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' }),
-  ],
-});
-
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(
-    new winston.transports.Console({
-      format: winston.format.simple(),
-    })
-  );
-}
 
 /* ---------------- APP INIT ---------------- */
 
 const app = express();
 const PORT = process.env.PORT || 7000;
 
-// Request logging middleware
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
-  next();
-});
-
 /* ---------------- SECURITY (Development Mode - No HTTPS enforcement) ---------------- */
 
+/*
 app.use(
   helmet({
     crossOriginOpenerPolicy: false,
@@ -69,27 +45,12 @@ app.use(
     },
   })
 );
+*/
 
 /* ---------------- CORE MIDDLEWARE ---------------- */
 
-// Optimize express json parsing with size limits
-app.use(express.json({
-  limit: '10mb',
-  type: ['application/json', 'application/vnd.api+json']
-}));
+app.use(express.json());
 app.use(cookieParser(process.env.SESSION_SECRET));
-
-// Add compression middleware to reduce response sizes
-const compression = require('compression');
-app.use(compression());
-
-// Add CORS with specific configuration for better performance
-const cors = require('cors');
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? false : true, // Allow all origins in dev
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
 
 /* ---------------- API ROUTES ---------------- */
 

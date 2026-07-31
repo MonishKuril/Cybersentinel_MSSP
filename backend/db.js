@@ -1,4 +1,5 @@
 const knex = require('knex');
+const logger = require('./logger');
 
 const db = knex({
   client: 'sqlite3',
@@ -53,7 +54,20 @@ if (process.env.NODE_ENV === 'development' || process.env.DEBUG_MODE === 'true')
 }
 
 db.on('query-error', (error, obj) => {
-  console.error('Knex query error:', error, 'Object:', obj);
+  logger.error('Knex query error', { message: error.message, sql: obj && obj.sql });
 });
+
+// WAL mode (enabled above) keeps writes in mssp.db-wal until it's
+// checkpointed back into mssp.db. Without periodic checkpointing that file
+// grows unbounded and reads have to reconcile against more and more of it.
+// PASSIVE mode checkpoints whatever it can without blocking concurrent
+// readers/writers, so this is safe to run in the background.
+const WAL_CHECKPOINT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const walCheckpointInterval = setInterval(() => {
+  db.raw('PRAGMA wal_checkpoint(PASSIVE);').catch((err) => {
+    logger.error('WAL checkpoint failed', { message: err.message });
+  });
+}, WAL_CHECKPOINT_INTERVAL_MS);
+walCheckpointInterval.unref();
 
 module.exports = db;

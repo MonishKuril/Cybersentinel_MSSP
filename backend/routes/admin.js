@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const knex = require('../db');
 const { authMiddleware, adminAuthMiddleware, superAdminAuthMiddleware, mainSuperAdminAuthMiddleware, adminOrSuperAdminAuthMiddleware } = require('../middleware/auth');
+const logger = require('../logger');
 
 // Helper to get user ID from username
 const getUserId = async (username) => {
@@ -10,16 +11,46 @@ const getUserId = async (username) => {
     return user ? user.id : null;
 };
 
+// Deletes a user along with any clients assigned exclusively to them.
+// If a client is still linked to another user via client_admins after this
+// user's link is removed, the client is left in place (covers the case
+// where a client is shared across multiple admins/superadmins).
+const deleteUserAndOwnedClients = async (trx, userId) => {
+    const ownedClientIds = (await trx('client_admins').where({ user_id: userId }).select('client_id'))
+        .map((row) => row.client_id);
+
+    await trx('client_admins').where({ user_id: userId }).del();
+
+    if (ownedClientIds.length) {
+        const stillLinked = await trx('client_admins')
+            .whereIn('client_id', ownedClientIds)
+            .distinct('client_id');
+        const stillLinkedIds = new Set(stillLinked.map((row) => row.client_id));
+        const orphanedClientIds = ownedClientIds.filter((id) => !stillLinkedIds.has(id));
+
+        if (orphanedClientIds.length) {
+            await trx('clients').whereIn('id', orphanedClientIds).del();
+        }
+    }
+
+    await trx('users').where({ id: userId }).del();
+};
+
 // In your POST /clients route
 router.post('/clients', [authMiddleware, adminOrSuperAdminAuthMiddleware], async (req, res) => {
-    console.log('POST /clients route called');
     try {
         const { name, url, description, graylog, logApi, adminId } = req.body;
-        console.log('Request body:', req.body);
 
         const existingClient = await knex('clients').where({ name }).first();
         if (existingClient) {
-            return res.status(409).json({ error: "Client with this name already exists" });
+            return res.status(409).json({ success: false, message: "Client with this name already exists" });
+        }
+
+        if (logApi && logApi.ssoClientId) {
+            const existingSsoClientId = await knex('clients').where({ sso_client_id: logApi.ssoClientId }).first();
+            if (existingSsoClientId) {
+                return res.status(409).json({ success: false, message: `SIEM SSO Client ID "${logApi.ssoClientId}" is already assigned to another client` });
+            }
         }
 
         let assignedAdminId;
@@ -29,15 +60,13 @@ router.post('/clients', [authMiddleware, adminOrSuperAdminAuthMiddleware], async
             if ((req.user.role === 'superadmin' || req.user.role === 'main-superadmin') && adminId) {
                 const adminExists = await knex('users').where({ id: adminId }).first('id');
                 if (!adminExists) {
-                    console.log('Assigned admin not found');
                     return res.status(404).json({ success: false, message: `Assigned admin with ID ${adminId} not found.` });
                 }
                 assignedAdminId = adminId;
             } else {
-                // Regular admins or superadmins creating for themselves. 
+                // Regular admins or superadmins creating for themselves.
                 assignedAdminId = req.user.id;
             }
-            console.log('Assigned admin ID:', assignedAdminId);
 
             // Insert the client record and client-admin relationship atomically using a transaction
             try {
@@ -57,14 +86,12 @@ router.post('/clients', [authMiddleware, adminOrSuperAdminAuthMiddleware], async
                         sso_username: logApi ? (logApi.ssoUsername || null) : null,
                         sso_client_id: logApi ? (logApi.ssoClientId || null) : null,
                     });
-                    console.log('New client ID:', newClientId);
 
                     // Insert the client-admin relationship
                     await trx('client_admins').insert({
                         client_id: newClientId,
                         user_id: assignedAdminId
                     });
-                    console.log('Client admin relationship created');
 
                     // Fetch and return the newly created client
                     const newClient = await trx('clients').where({ id: newClientId }).first();
@@ -74,14 +101,14 @@ router.post('/clients', [authMiddleware, adminOrSuperAdminAuthMiddleware], async
                 res.status(201).json({ success: true, client: result });
 
             } catch (transactionError) {
-                console.error('Database error inserting client:', transactionError);
+                logger.error('Database error inserting client', { message: transactionError.message, stack: transactionError.stack });
                 return res.status(500).json({
                     success: false,
                     message: 'Failed to add client due to database error'
                 });
             }
     } catch (error) {
-        console.error('Error adding client:', error);
+        logger.error('Error adding client', { message: error.message, stack: error.stack });
 
         // Handle specific error types
         if (error.message && error.message.includes('not found')) {
@@ -119,7 +146,17 @@ router.put('/clients/:id', [authMiddleware, adminAuthMiddleware], async (req, re
 
         const existingClient = await knex('clients').where({ name }).whereNot({ id: clientId }).first();
         if (existingClient) {
-            return res.status(409).json({ error: "Client with this name already exists" });
+            return res.status(409).json({ success: false, message: "Client with this name already exists" });
+        }
+
+        if (logApi && logApi.ssoClientId) {
+            const existingSsoClientId = await knex('clients')
+                .where({ sso_client_id: logApi.ssoClientId })
+                .whereNot({ id: clientId })
+                .first();
+            if (existingSsoClientId) {
+                return res.status(409).json({ success: false, message: `SIEM SSO Client ID "${logApi.ssoClientId}" is already assigned to another client` });
+            }
         }
 
         const updated = await knex('clients').where({ id: clientId }).update({
@@ -144,7 +181,7 @@ router.put('/clients/:id', [authMiddleware, adminAuthMiddleware], async (req, re
         const updatedClient = await knex('clients').where({ id: clientId }).first();
         res.json({ success: true, client: updatedClient });
     } catch (error) {
-        console.error('Error updating client:', error);
+        logger.error('Error updating client', { message: error.message, stack: error.stack });
         res.status(500).json({ success: false, message: 'Failed to update client' });
     }
 });
@@ -174,7 +211,7 @@ router.delete('/clients/:id', [authMiddleware, adminAuthMiddleware], async (req,
 
         res.json({ success: true, message: 'Client deleted successfully' });
     } catch (error) {
-        console.error('Error deleting client:', error);
+        logger.error('Error deleting client', { message: error.message, stack: error.stack });
         res.status(500).json({ success: false, message: 'Failed to delete client' });
     }
 });
@@ -213,7 +250,7 @@ router.post('/admins', [authMiddleware, superAdminAuthMiddleware], async (req, r
             admin: newAdmin
         });
     } catch (error) {
-        console.error('Error creating admin:', error);
+        logger.error('Error creating admin', { message: error.message, stack: error.stack });
         res.status(500).json({ success: false, message: 'Failed to create admin' });
     }
 });
@@ -221,19 +258,32 @@ router.post('/admins', [authMiddleware, superAdminAuthMiddleware], async (req, r
 router.get('/admins', [authMiddleware, superAdminAuthMiddleware], async (req, res) => {
     try {
         const admins = await knex('users').where({ role: 'admin' });
+        const adminIds = admins.map((admin) => admin.id);
 
-        // For each admin, fetch their associated clients
-        const adminsWithClients = await Promise.all(admins.map(async (admin) => {
-            const clients = await knex('clients')
+        // Fetch every assigned client for all admins in a single query instead
+        // of one query per admin, and group the results in memory.
+        const clientRows = adminIds.length
+            ? await knex('clients')
                 .join('client_admins', 'clients.id', '=', 'client_admins.client_id')
-                .where('client_admins.user_id', admin.id)
-                .select('clients.*');
-            return { ...admin, clients };
+                .whereIn('client_admins.user_id', adminIds)
+                .select('clients.*', 'client_admins.user_id as __adminId')
+            : [];
+
+        const clientsByAdminId = clientRows.reduce((acc, row) => {
+            const { __adminId, ...client } = row;
+            if (!acc[__adminId]) acc[__adminId] = [];
+            acc[__adminId].push(client);
+            return acc;
+        }, {});
+
+        const adminsWithClients = admins.map((admin) => ({
+            ...admin,
+            clients: clientsByAdminId[admin.id] || []
         }));
 
         res.json(adminsWithClients);
     } catch (error) {
-        console.error('Error fetching admins:', error);
+        logger.error('Error fetching admins', { message: error.message, stack: error.stack });
         res.status(500).json({ success: false, message: 'Failed to fetch admins' });
     }
 });
@@ -250,7 +300,7 @@ router.get('/admins/:adminId/clients', [authMiddleware, superAdminAuthMiddleware
 
         res.json(clients);
     } catch (error) {
-        console.error('Error fetching admin clients:', error);
+        logger.error('Error fetching admin clients', { message: error.message, stack: error.stack });
         res.status(500).json({ success: false, message: 'Failed to fetch admin clients' });
     }
 });
@@ -278,8 +328,51 @@ router.patch('/admins/:id/block', [authMiddleware, superAdminAuthMiddleware], as
             admin: admin
         });
     } catch (error) {
-        console.error('Error updating admin block status:', error);
+        logger.error('Error updating admin block status', { message: error.message, stack: error.stack });
         res.status(500).json({ success: false, message: 'Failed to update admin status' });
+    }
+});
+
+router.delete('/admins/:id', [authMiddleware, superAdminAuthMiddleware], async (req, res) => {
+    try {
+        const adminId = parseInt(req.params.id);
+        if (isNaN(adminId)) {
+            return res.status(400).json({ success: false, message: 'Invalid admin ID' });
+        }
+
+        const admin = await knex('users').where({ id: adminId, role: 'admin' }).first();
+        if (!admin) {
+            return res.status(404).json({ success: false, message: 'Admin not found' });
+        }
+
+        await knex.transaction((trx) => deleteUserAndOwnedClients(trx, adminId));
+
+        res.json({ success: true, message: 'Admin and their clients deleted successfully' });
+    } catch (error) {
+        logger.error('Error deleting admin', { message: error.message, stack: error.stack });
+        res.status(500).json({ success: false, message: 'Failed to delete admin' });
+    }
+});
+
+router.patch('/admins/:id/reset-mfa', [authMiddleware, superAdminAuthMiddleware], async (req, res) => {
+    try {
+        const adminId = parseInt(req.params.id);
+        if (isNaN(adminId)) {
+            return res.status(400).json({ success: false, message: 'Invalid admin ID' });
+        }
+
+        const updated = await knex('users').where({ id: adminId, role: 'admin' }).update({ mfa_secret: null });
+        if (!updated) {
+            return res.status(404).json({ success: false, message: 'Admin not found' });
+        }
+
+        res.json({
+            success: true,
+            message: 'MFA reset. The admin will be asked to set up MFA again on their next login.'
+        });
+    } catch (error) {
+        logger.error('Error resetting admin MFA', { message: error.message, stack: error.stack });
+        res.status(500).json({ success: false, message: 'Failed to reset MFA' });
     }
 });
 
@@ -294,7 +387,7 @@ router.get('/admins/:id', [authMiddleware, superAdminAuthMiddleware], async (req
 
         res.json({ success: true, admin });
     } catch (error) {
-        console.error('Error fetching admin:', error);
+        logger.error('Error fetching admin', { message: error.message, stack: error.stack });
         res.status(500).json({ success: false, message: 'Failed to fetch admin' });
     }
 });
@@ -334,7 +427,7 @@ router.post('/superadmins', [authMiddleware, mainSuperAdminAuthMiddleware], asyn
             superadmin: newSuperAdmin
         });
     } catch (error) {
-        console.error('Error creating superadmin:', error);
+        logger.error('Error creating superadmin', { message: error.message, stack: error.stack });
         res.status(500).json({ success: false, message: 'Failed to create superadmin' });
     }
 });
@@ -376,7 +469,7 @@ router.put('/admins/:id', [authMiddleware, superAdminAuthMiddleware], async (req
         });
 
     } catch (error) {
-        console.error('Error:', error);
+        logger.error('Error updating admin', { message: error.message, stack: error.stack });
         res.status(500).json({
             success: false,
             message: error.message,
@@ -389,7 +482,7 @@ router.get('/superadmins', [authMiddleware, mainSuperAdminAuthMiddleware], async
         const superadmins = await knex('users').where({ role: 'superadmin' });
         res.json(superadmins);
     } catch (error) {
-        console.error('Error fetching superadmins:', error);
+        logger.error('Error fetching superadmins', { message: error.message, stack: error.stack });
         res.status(500).json({ success: false, message: 'Failed to fetch superadmins' });
     }
 });
@@ -415,8 +508,43 @@ router.patch('/superadmins/:username/block', [authMiddleware, mainSuperAdminAuth
         });
 
     } catch (error) {
-        console.error('Error updating superadmin:', error);
+        logger.error('Error updating superadmin', { message: error.message, stack: error.stack });
         res.status(500).json({ success: false, message: 'Failed to update superadmin' });
+    }
+});
+
+router.delete('/superadmins/:username', [authMiddleware, mainSuperAdminAuthMiddleware], async (req, res) => {
+    try {
+        const { username } = req.params;
+        const superadmin = await knex('users').where({ username, role: 'superadmin' }).first();
+        if (!superadmin) {
+            return res.status(404).json({ success: false, message: 'Superadmin not found' });
+        }
+
+        await knex.transaction((trx) => deleteUserAndOwnedClients(trx, superadmin.id));
+
+        res.json({ success: true, message: 'Superadmin and their clients deleted successfully' });
+    } catch (error) {
+        logger.error('Error deleting superadmin', { message: error.message, stack: error.stack });
+        res.status(500).json({ success: false, message: 'Failed to delete superadmin' });
+    }
+});
+
+router.patch('/superadmins/:username/reset-mfa', [authMiddleware, mainSuperAdminAuthMiddleware], async (req, res) => {
+    try {
+        const { username } = req.params;
+        const updated = await knex('users').where({ username, role: 'superadmin' }).update({ mfa_secret: null });
+        if (!updated) {
+            return res.status(404).json({ success: false, message: 'Superadmin not found' });
+        }
+
+        res.json({
+            success: true,
+            message: 'MFA reset. The superadmin will be asked to set up MFA again on their next login.'
+        });
+    } catch (error) {
+        logger.error('Error resetting superadmin MFA', { message: error.message, stack: error.stack });
+        res.status(500).json({ success: false, message: 'Failed to reset MFA' });
     }
 });
 

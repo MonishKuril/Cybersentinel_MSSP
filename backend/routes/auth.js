@@ -6,9 +6,8 @@ const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const bcrypt = require('bcrypt');
 const knex = require('../db');
+const logger = require('../logger');
 require('dotenv').config();
-
-const { authMiddleware } = require('../middleware/auth');
 
 // SIEM SSO signing key (RS256). The private key never leaves the console.
 const SIEM_SSO_KID = process.env.SIEM_SSO_KID;
@@ -27,6 +26,31 @@ const renderSsoError = (res, status, message) => {
   res.status(status).type('html').send(
     `<!doctype html><html><body><p>${escapeHtml(message)}</p></body></html>`
   );
+};
+
+// Dedicated auth check for the SIEM SSO launch route. This is a full
+// top-level browser navigation (not a JSON API call), so on failure we
+// redirect back to the console instead of showing a raw JSON body in the
+// tab. Also checks the users.blocked column directly, since authMiddleware
+// only validates the JWT and does not re-check DB block status per request.
+const siemLaunchAuthMiddleware = async (req, res, next) => {
+  const token = req.cookies.token;
+  if (!token) {
+    return res.redirect('/');
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await knex('users').where({ id: decoded.id }).select('blocked').first();
+    if (user && user.blocked) {
+      res.clearCookie('token');
+      return res.redirect('/');
+    }
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.clearCookie('token');
+    return res.redirect('/');
+  }
 };
 
 // Generate backup codes
@@ -74,7 +98,7 @@ router.post('/setup-mfa', async (req, res) => {
       secret: secret.base32
     });
   } catch (error) {
-    console.error('MFA setup error:', error);
+    logger.error('MFA setup error', { message: error.message, stack: error.stack });
     res.status(500).json({ success: false, message: 'Failed to setup MFA' });
   }
 });
@@ -109,7 +133,6 @@ router.post('/login', async (req, res) => {
   username = username ? username.trim() : username;
   password = password ? password.trim() : password;
   totpCode = totpCode ? totpCode.trim() : totpCode;
-  console.log('Login attempt for:', username);
 
   try {
     // Validate input
@@ -120,7 +143,6 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    console.log('1. Fetching user from DB');
     // Only select necessary fields for performance
     const user = await knex('users')
       .where({ username })
@@ -128,33 +150,25 @@ router.post('/login', async (req, res) => {
       .first();
 
     if (!user) {
-      console.log('User not found');
       // Add a small delay to prevent timing attacks
       await new Promise(resolve => setTimeout(resolve, 100));
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
-    console.log('2. User found:', user.username);
 
     if (user.blocked) {
-      console.log('User is blocked');
       return res.status(403).json({
         success: false,
         message: 'Your account has been blocked by the administrator. Please contact support.',
         blocked: true
       });
     }
-    console.log('3. User is not blocked');
 
-    console.log('4. Comparing passwords');
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      console.log('Invalid password');
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
-    console.log('5. Password is valid');
 
     const hasMFA = !!user.mfa_secret;
-    console.log('6. MFA Status:', hasMFA);
 
     if (!hasMFA) {
       return res.json({
@@ -172,12 +186,9 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    console.log('7. Verifying MFA token');
     if (!(await verifyMFAToken(username, totpCode))) {
-      console.log('Invalid MFA token');
       return res.status(401).json({ success: false, message: "Invalid MFA token" });
     }
-    console.log('8. MFA token is valid');
 
     const token = jwt.sign(
       { id: user.id, username, role: user.role },
@@ -192,10 +203,9 @@ router.post('/login', async (req, res) => {
       maxAge: 8 * 60 * 60 * 1000
     });
 
-    console.log('9. Login successful');
     res.json({ success: true, message: "Login successful", role: user.role });
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error', { message: error.message, stack: error.stack });
     res.status(500).json({ success: false, message: 'An internal error occurred' });
   }
 });
@@ -218,13 +228,13 @@ const getNormalizedUrl = (rawUrl) => {
 // Launch SSO into a client's SIEM: mints a short-lived RS256 JWT and hands it
 // off via an auto-submitting form POST (a real top-level navigation, not
 // fetch/XHR - the SIEM needs that to write to its own origin's localStorage).
-router.get('/siem-launch/:clientId', authMiddleware, async (req, res) => {
+router.get('/siem-launch/:clientId', siemLaunchAuthMiddleware, async (req, res) => {
   try {
     const user = req.user;
     const clientId = req.params.clientId;
 
     if (!SIEM_SSO_PRIVATE_KEY || !SIEM_SSO_KID) {
-      console.error('SIEM_SSO_PRIVATE_KEY / SIEM_SSO_KID environment variables not set');
+      logger.error('SIEM_SSO_PRIVATE_KEY / SIEM_SSO_KID environment variables not set');
       return renderSsoError(res, 500, 'Server configuration error: SIEM SSO signing key not set');
     }
 
@@ -284,7 +294,7 @@ router.get('/siem-launch/:clientId', authMiddleware, async (req, res) => {
 </body>
 </html>`);
   } catch (err) {
-    console.error('Error generating SIEM SSO launch token:', err);
+    logger.error('Error generating SIEM SSO launch token', { message: err.message, stack: err.stack });
     renderSsoError(res, 500, 'Failed to generate SIEM SSO launch token');
   }
 });
